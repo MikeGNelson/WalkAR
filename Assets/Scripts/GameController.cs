@@ -5,7 +5,7 @@ using TMPro;
 public class GameController : MonoBehaviour
 {
     [Header("Prefabs & References")]
-    public List<GameObject> peoplePrefabs;
+    public GameObject uiPrefab;
     public Transform midPoint;
     public Transform startPoint;
     public Transform endPoint;
@@ -21,7 +21,7 @@ public class GameController : MonoBehaviour
     private int currentConditionIndex = 0;
     private List<DataManager.Conditons> conditionOrder;
     private DataManager dataManager;
-    private Avoidance.PlayerController playerController;
+    public Avoidance.PlayerController playerController;
 
     private void Start()
     {
@@ -58,23 +58,25 @@ public class GameController : MonoBehaviour
             return;
         }
 
-        // Clear old models and set up for new trial
+        // Clear old UI
         ClearModels();
 
+        // Get and set condition
         var currentCondition = conditionOrder[currentConditionIndex];
         dataManager.conditions = currentCondition;
+        dataManager.SendCondition();
 
-        // Spawn the appropriate model for this condition
+        // Spawn the UI configured for this condition
         SpawnModelForCondition(currentCondition);
 
-        // Reset player state
-        playerController.stopWriting = false;
+        // Reset player and start recording
+        playerController.ResetTrialState();
         isRecording = true;
+        promptText.text = $"Condition {currentConditionIndex + 1}/{conditionOrder.Count}\nWalk to the target.";
 
-        // Start recording
-        promptText.text = $"Condition {currentConditionIndex + 1} / {conditionOrder.Count}\nWalk to the target.";
-        dataManager.SendCondition();
+        Debug.Log($"[GameController] Started trial: {currentCondition}");
     }
+
 
     /// <summary>
     /// Called automatically when participant reaches end point (via PlayerController),
@@ -102,21 +104,36 @@ public class GameController : MonoBehaviour
 
     private void SpawnModelForCondition(DataManager.Conditons condition)
     {
-        int modelIndex = (int)condition;
-        if (modelIndex >= 0 && modelIndex < peoplePrefabs.Count)
+        // --- Spawn and configure UI ---
+        if (uiPrefab != null)
         {
-            GameObject model = Instantiate(
-                peoplePrefabs[modelIndex],
-                midPoint.position,
-                Quaternion.LookRotation(startPoint.position - midPoint.position)
-            );
-            modelsList.Add(model);
+            GameObject uiInstance = Instantiate(uiPrefab);
+            modelsList.Add(uiInstance);
+
+            UIAnchorController uiController = uiInstance.GetComponent<UIAnchorController>();
+            if (uiController != null)
+            {
+                // Assign references
+                uiController.playerHead = vrRig.transform;          // typically XR camera root
+                uiController.playerBody = playerController.transform;
+                uiController.dataManager = dataManager;
+
+                // Apply the correct spatial parameters for this condition
+                uiController.ApplyCondition(condition);
+
+                Debug.Log($"[GameController] UI spawned and configured for {condition}");
+            }
+            else
+            {
+                Debug.LogWarning($"UI prefab '{uiPrefab.name}' is missing UIAnchorController!");
+            }
         }
         else
         {
-            Debug.LogWarning($"No prefab for condition index {modelIndex}. Check peoplePrefabs list.");
+            Debug.LogWarning("UI prefab not assigned in GameController.");
         }
     }
+
 
     private void ClearModels()
     {

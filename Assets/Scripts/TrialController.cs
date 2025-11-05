@@ -1,46 +1,93 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using Photon.Pun;
-public class TrialController : MonoBehaviourPunCallbacks
+using TMPro;
+using UnityEngine.UI;
+
+public class TrialController : MonoBehaviour
 {
-    public GameController GC ;
+    [Header("References")]
+    public GameController GC;
     public DataManager DM;
+    public GameObject vrRig;
 
-    public GameObject camera;
-    public GameObject canvas;
+    [Header("UI Elements")]
+    public Canvas controlCanvas;           // Canvas for UID + control buttons
+    public TMP_InputField uidInputField;   // Field to enter participant ID
+    public Button startButton;             // Button to initialize experiment
+    public Button nextTrialButton;         // Button to advance to next trial
+    public TextMeshProUGUI statusText;     // Displays experiment progress
 
-    // Start is called before the first frame update
+    private bool experimentInitialized = false;
+
     void Start()
     {
-        GC = GameObject.FindObjectOfType<GameController>();
-        DM = GameObject.FindObjectOfType<DataManager>();
-        if(!photonView.IsMine)
+        GC = FindObjectOfType<GameController>();
+        DM = FindObjectOfType<DataManager>();
+
+        // Hide Next Trial button until after UID entered
+        nextTrialButton.interactable = false;
+
+        // Hook up button events
+        startButton.onClick.AddListener(OnStartExperimentClicked);
+        nextTrialButton.onClick.AddListener(OnNextTrialClicked);
+    }
+
+    void Update()
+    {
+        // If the experiment is initialized and the current trial finished, enable Next Trial
+        if (experimentInitialized && !GC.isRecording && nextTrialButton != null)
         {
-            camera.gameObject.SetActive(false);
-            canvas.SetActive(false);
+            // Enable next trial when player returns to start position
+            bool ready = Vector3.Distance(GC.playerController.transform.position, GC.startPoint.position) < 1.0f;
+            nextTrialButton.interactable = ready;
         }
     }
 
-    // Update is called once per frame
-    void Update()
+    private void OnStartExperimentClicked()
     {
-        
+        if (string.IsNullOrEmpty(uidInputField.text))
+        {
+            statusText.text = "Please enter a valid UID.";
+            return;
+        }
+
+        int uid = int.Parse(uidInputField.text);
+        DM.UId = uid;
+        GC.InitializeExperiment(uid);
+        experimentInitialized = true;
+
+        statusText.text = $"Experiment initialized for UID {uid}. Ready for first trial.";
+        nextTrialButton.interactable = true; // Allow starting first trial
     }
 
-    public void StartTrial(int condition)
+    private void OnNextTrialClicked()
     {
-        Debug.Log("Start Trial");
-        DM.conditions = (DataManager.Conditons)condition;
-        DM.SendCondition();
+        if (!experimentInitialized)
+        {
+            statusText.text = "Please initialize experiment first.";
+            return;
+        }
 
+        //// Run the next condition trial
+        //statusText.text = $"Starting trial {GC.currentConditionIndex + 1} / {GC.conditionOrder.Count}...";
+        GC.StartTrial();
+
+        nextTrialButton.interactable = false; // disable until trial completes
     }
 
     public void ResetPosition()
     {
-        Debug.Log("reset");
-        Transform offset = GC.vrRig.gameObject.GetComponentInChildren<Transform>();
-        offset.position = GameObject.FindGameObjectWithTag("StartPosition").transform.position;
-        offset.LookAt(GameObject.FindGameObjectWithTag("EndPosition").transform.position);
+        Debug.Log("Resetting player position...");
+        Transform rigRoot = vrRig.transform;
+        Transform startPos = GameObject.FindGameObjectWithTag("StartPosition").transform;
+        Transform endPos = GameObject.FindGameObjectWithTag("EndPosition").transform;
+
+        rigRoot.position = startPos.position;
+        Vector3 lookDir = (endPos.position - startPos.position);
+        lookDir.y = 0;
+        rigRoot.rotation = Quaternion.LookRotation(lookDir.normalized);
+
+        statusText.text = "Player position reset to start.";
     }
 }

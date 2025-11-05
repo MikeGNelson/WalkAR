@@ -5,133 +5,117 @@ using TMPro;
 
 namespace Avoidance
 {
-
     public class PlayerController : MonoBehaviour
     {
+        [Header("References")]
+        public DataManager DM;
+        public GameController GC;
+        public ETRecorder ET;
+        public TextMeshProUGUI message;
+        public GameObject screenBlanker;
 
+        [Header("Runtime Flags")]
         public bool hasReachedDestination = false;
         public bool stopWriting = false;
         public bool isRecording = false;
-        public GameObject Manager;
+        public bool eventTriggered = false;
 
-        public DataManager DM;
-        public GameManager GM;
-        public ETRecorder ET;
-
-        public GameController GC;
-        //private GameManager EM;
-
-        public TextMeshProUGUI message;
-
+        [Header("Kinematic Info")]
         public float startTime;
         public float endTime;
         public float currentSpeed;
-
-        public Vector3 prevTrans = new Vector3(0, 0, 0);
+        public Vector3 prevTrans = Vector3.zero;
         private float previousTime;
 
-        public List<double> speeds = null;
-        public List<float> times = null;
-        public List<Vector3> positions = null;
-        public List<float> averageDistances = null;
-        public float time = 0;
+        [Header("Tracked Hands")]
+        public Transform leftHand;
+        public Transform rightHand;
 
-        public bool eventTriggered = false;
-        public GameObject screenBlanker;
+        private float m_Speed = 5.0f;
 
-
-        float m_Speed;
-
-        public Vector3 forwardDir;
-
-
-        // Start is called before the first frame update
         void Start()
         {
-            //previousTime = 0;
-            //rb = GetComponent<Rigidbody>();
-            DM = GameObject.FindObjectOfType<DataManager>();
-            GC = GameObject.FindObjectOfType<GameController>();
-            ET = GameObject.FindObjectOfType<ETRecorder>();
-
+            DM = FindObjectOfType<DataManager>();
+            GC = FindObjectOfType<GameController>();
+            ET = FindObjectOfType<ETRecorder>();
             ToggleScreen(false);
-
-            m_Speed = 5.0f;
-
+            prevTrans = transform.position;
         }
-
-   
 
         void FixedUpdate()
         {
             isRecording = GC.isRecording;
-            if (GC.isRecording)
+
+            if (isRecording)
             {
                 message.text = "Walk";
-                if (Vector3.Distance(this.transform.position, GC.endPoint.position) < 1.8)
-                {
-                    //Debug.Log("Reached Dest");
 
-                    if (!stopWriting)
-                    {
-                        hasReachedDestination = true;
-                    }
-                }
-                else
+                // Detect reaching the destination
+                if (Vector3.Distance(transform.position, GC.endPoint.position) < 1.8f && !stopWriting)
                 {
-                    //Debug.Log(Vector3.Distance(this.transform.position, GC.endPoint.position));
-                    //Debug.Log(Vector3.Distance(this.transform.position, GC.endPoint.position));
+                    hasReachedDestination = true;
                 }
+
                 if (hasReachedDestination)
                 {
+                    // Trial complete
                     hasReachedDestination = false;
                     stopWriting = true;
+                    isRecording = false;
                     GC.isRecording = false;
+
+                    endTime = Time.time;
                     ToggleScreen(true);
+
+                    // Write and end trial
                     DM.WriteData();
+                    GC.EndTrial();
+
                     ToggleScreen(false);
+                    return;
                 }
-                else
+
+                // While walking and recording
+                if (!stopWriting)
                 {
-                    //Debug.Log("Recording");
-                    if (!stopWriting)
-                    {
-                        //Debug.Log("Write");
-                        //if (Vector3.Distance(prevTrans, this.transform.position) > .05)
-                        {
-                            float x = this.transform.position.x;
-                            float y = this.transform.position.y;
-                            float z = this.transform.position.z;
-                            
+                    // Compute instantaneous speed
+                    float deltaTime = Time.fixedDeltaTime;
+                    float distance = Vector3.Distance(prevTrans, transform.position);
+                    currentSpeed = distance / deltaTime;
 
-                            DM.records.Add(new DataManager.Record(Time.time, this.transform.position,   ET.GetEyeData(), eventTriggered));
-                            prevTrans = this.transform.position;
-                        }
+                    // Log positional + eye data
+                    var eyeData = ET.GetEyeData();
+                    DM.AddRecord(transform.position,
+                                 leftHand != null ? leftHand.position : Vector3.zero,
+                                 leftHand != null ? leftHand.rotation : Quaternion.identity,
+                                 rightHand != null ? rightHand.position : Vector3.zero,
+                                 rightHand != null ? rightHand.rotation : Quaternion.identity,
+                                 (int)DM.conditions, eyeData, eventTriggered);
 
-
-                    }
-
+                    prevTrans = transform.position;
+                    previousTime = Time.time;
                 }
             }
             else
             {
                 message.text = "Stop";
             }
-
         }
 
         void ToggleScreen(bool mode)
         {
             if (screenBlanker != null)
-            {
-                screenBlanker.gameObject.SetActive(mode);
-            }
+                screenBlanker.SetActive(mode);
         }
 
-
-      
-
-
+        // Optional helper — resets player state for next trial
+        public void ResetTrialState()
+        {
+            stopWriting = false;
+            hasReachedDestination = false;
+            eventTriggered = false;
+            prevTrans = transform.position;
+            startTime = Time.time;
+        }
     }
-
 }
