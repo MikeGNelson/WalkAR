@@ -22,8 +22,8 @@ public class TrialController : MonoBehaviour
 
     void Start()
     {
-        GC = FindObjectOfType<GameController>();
-        DM = FindObjectOfType<DataManager>();
+        GC = FindFirstObjectByType<GameController>();
+        DM = FindFirstObjectByType<DataManager>();
 
         // Hide Next Trial button until after UID entered
         nextTrialButton.interactable = false;

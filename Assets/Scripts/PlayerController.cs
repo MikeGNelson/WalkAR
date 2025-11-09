@@ -35,9 +35,9 @@ namespace Avoidance
 
         void Start()
         {
-            DM = FindObjectOfType<DataManager>();
-            GC = FindObjectOfType<GameController>();
-            ET = FindObjectOfType<ETRecorder>();
+            DM = FindFirstObjectByType<DataManager>();
+            GC = FindFirstObjectByType<GameController>();
+            ET = FindFirstObjectByType<ETRecorder>();
             ToggleScreen(false);
             prevTrans = transform.position;
         }

@@ -25,8 +25,8 @@ public class GameController : MonoBehaviour
 
     private void Start()
     {
-        dataManager = FindObjectOfType<DataManager>();
-        playerController = FindObjectOfType<Avoidance.PlayerController>();
+        dataManager = FindFirstObjectByType<DataManager>();
+        playerController = FindFirstObjectByType<Avoidance.PlayerController>();
         promptText.text = "Enter UID to begin.";
     }
 

@@ -117,7 +117,7 @@ public class DataManager : MonoBehaviour
         // Convert enum to readable label for both file names and UI
         conditionText = conditions.ToString();
 
-        conditionIndicator.text = $"Condition: {conditionText}  (UID {UId})";
+        //conditionIndicator.text = $"Condition: {conditionText}  (UID {UId})";
     }
 
     // ---------- LOGGING ----------
