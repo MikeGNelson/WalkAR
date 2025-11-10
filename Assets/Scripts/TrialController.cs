@@ -1,93 +1,49 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using Avoidance;
 
 public class TrialController : MonoBehaviour
 {
     [Header("References")]
     public GameController GC;
     public DataManager DM;
-    public GameObject vrRig;
+    public PlayerController PC;
 
-    [Header("UI Elements")]
-    public Canvas controlCanvas;           // Canvas for UID + control buttons
-    public TMP_InputField uidInputField;   // Field to enter participant ID
-    public Button startButton;             // Button to initialize experiment
-    public Button nextTrialButton;         // Button to advance to next trial
-    public TextMeshProUGUI statusText;     // Displays experiment progress
+    [Header("UI")]
 
-    private bool experimentInitialized = false;
+    public GameObject initUIPrefab;
+
+    [HideInInspector] public GameObject activeInitUI;
+
+
+
+
+    private TrialStateBase currentState;
+    private int currentTrialIndex = 0;
 
     void Start()
     {
         GC = FindFirstObjectByType<GameController>();
         DM = FindFirstObjectByType<DataManager>();
+        PC = FindFirstObjectByType<PlayerController>();
 
-        // Hide Next Trial button until after UID entered
-        nextTrialButton.interactable = false;
-
-        // Hook up button events
-        startButton.onClick.AddListener(OnStartExperimentClicked);
-        nextTrialButton.onClick.AddListener(OnNextTrialClicked);
+        ChangeState(new TrialInitState(this));
     }
 
     void Update()
     {
-        // If the experiment is initialized and the current trial finished, enable Next Trial
-        if (experimentInitialized && !GC.isRecording && nextTrialButton != null)
-        {
-            // Enable next trial when player returns to start position
-            bool ready = Vector3.Distance(GC.playerController.transform.position, GC.startPoint.position) < 1.0f;
-            nextTrialButton.interactable = ready;
-        }
+        currentState?.Update();
     }
 
-    private void OnStartExperimentClicked()
+    public void ChangeState(TrialStateBase newState)
     {
-        if (string.IsNullOrEmpty(uidInputField.text))
-        {
-            statusText.text = "Please enter a valid UID.";
-            return;
-        }
-
-        int uid = int.Parse(uidInputField.text);
-        DM.UId = uid;
-        GC.InitializeExperiment(uid);
-        experimentInitialized = true;
-
-        statusText.text = $"Experiment initialized for UID {uid}. Ready for first trial.";
-        nextTrialButton.interactable = true; // Allow starting first trial
+        currentState?.Exit();
+        currentState = newState;
+        currentState.Enter();
     }
 
-    private void OnNextTrialClicked()
-    {
-        if (!experimentInitialized)
-        {
-            statusText.text = "Please initialize experiment first.";
-            return;
-        }
-
-        //// Run the next condition trial
-        //statusText.text = $"Starting trial {GC.currentConditionIndex + 1} / {GC.conditionOrder.Count}...";
-        GC.StartTrial();
-
-        nextTrialButton.interactable = false; // disable until trial completes
-    }
-
-    public void ResetPosition()
-    {
-        Debug.Log("Resetting player position...");
-        Transform rigRoot = vrRig.transform;
-        Transform startPos = GameObject.FindGameObjectWithTag("StartPosition").transform;
-        Transform endPos = GameObject.FindGameObjectWithTag("EndPosition").transform;
-
-        rigRoot.position = startPos.position;
-        Vector3 lookDir = (endPos.position - startPos.position);
-        lookDir.y = 0;
-        rigRoot.rotation = Quaternion.LookRotation(lookDir.normalized);
-
-        statusText.text = "Player position reset to start.";
-    }
+    // For other states to access
+    public int CurrentTrialIndex => currentTrialIndex;
+    public void IncrementTrialIndex() => currentTrialIndex++;
 }

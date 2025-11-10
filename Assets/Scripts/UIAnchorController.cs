@@ -69,7 +69,7 @@ public class UIAnchorController : MonoBehaviour
         // Parse enum
         switch (condition)
         {
-            case DataManager.Conditons.Center_Head_Close: 
+            case DataManager.Conditons.Center_Head_Close:
                 followHead = true;
                 offsetRight = false;
                 followDistance = 1.5f;
@@ -123,78 +123,107 @@ public class UIAnchorController : MonoBehaviour
                   $"→ HeadFollow:{followHead}, RightOffset:{offsetRight}, Dist:{followDistance}");
     }
 
-
+    // -------------------------------------------------------------------
+    // UPDATED ANCHOR LOGIC (smooth follow + torso tracking)
+    // -------------------------------------------------------------------
     void UpdateAnchor()
+{
+    if (uiCanvas == null || playerHead == null)
+        return;
+
+    // Which transform to base from
+    Transform anchor = followHead ? playerHead : playerBody;
+
+    // Decide forward vector
+    Vector3 forward;
+    if (followHead)
     {
-        if (followHead)
-        {
-            Vector3 forward = new Vector3(playerHead.forward.x, 0, playerHead.forward.z).normalized;
-            Vector3 basePos = playerHead.position + forward * followDistance;
-            Vector3 rightOffset = offsetRight ? Vector3.Cross(Vector3.up, forward).normalized * 0.5f : Vector3.zero;
-            uiCanvas.transform.position = basePos + rightOffset;
-            uiCanvas.transform.LookAt(playerHead.position);
-            uiCanvas.transform.rotation = Quaternion.LookRotation(uiCanvas.transform.position - playerHead.position);
-        }
+        // smooth yaw-only head direction
+        Vector3 flatForward = new Vector3(playerHead.forward.x, 0, playerHead.forward.z).normalized;
+        forward = flatForward;
+    }
+    else
+    {
+        // try Meta torso joint first
+        Transform torso = GetMetaTorso();
+        if (torso != null)
+            forward = new Vector3(torso.forward.x, 0, torso.forward.z).normalized;
         else
-        {
-            // Torso-follow using left controller direction
-            Vector3 forward = new Vector3(leftController.forward.x, 0, leftController.forward.z).normalized;
-            Vector3 basePos = playerBody.position + forward * followDistance;
-            Vector3 rightOffset = offsetRight ? Vector3.Cross(Vector3.up, forward).normalized * 0.5f : Vector3.zero;
-
-            uiCanvas.transform.position = basePos + rightOffset;
-            uiCanvas.transform.rotation = Quaternion.LookRotation(forward);
-        }
-
-        //else
-        //{
-        //    // Compute smoothed torso heading
-        //    Vector3 velocity = playerBody.GetComponent<Rigidbody>() != null ?
-        //                       playerBody.GetComponent<Rigidbody>().linearVelocity :
-        //                       playerBody.forward;
-        //    if (velocity.magnitude > 0.01f)
-        //    {
-        //        movementHistory.Enqueue(velocity.normalized);
-        //        if (movementHistory.Count > historyLength)
-        //            movementHistory.Dequeue();
-
-        //        Vector3 avg = Vector3.zero;
-        //        foreach (var v in movementHistory)
-        //            avg += v;
-        //        avgDirection = Vector3.Lerp(avgDirection, avg.normalized, 1f - torsoSmoothing);
-        //    }
-
-        //    Vector3 forward = new Vector3(avgDirection.x, 0, avgDirection.z).normalized;
-        //    Vector3 basePos = playerBody.position + forward * followDistance;
-        //    Vector3 rightOffset = offsetRight ? Vector3.Cross(Vector3.up, forward).normalized * 0.5f : Vector3.zero;
-        //    uiCanvas.transform.position = basePos + rightOffset;
-        //    uiCanvas.transform.rotation = Quaternion.LookRotation(forward);
-        //}
+            // fallback to right controller forward
+            forward = new Vector3(leftController.forward.x, 0, leftController.forward.z).normalized;
     }
 
+    // compute position + offset
+    Vector3 basePos = anchor.position + forward * followDistance;
+    Vector3 rightOffset = offsetRight ? Vector3.Cross(Vector3.up, forward).normalized * 0.5f : Vector3.zero;
+    Vector3 targetPos = basePos + rightOffset + Vector3.up * 0.25f;
+
+    // smooth follow
+    uiCanvas.transform.position = Vector3.Lerp(uiCanvas.transform.position, targetPos, Time.deltaTime * 8f);
+
+    // face toward player
+    Vector3 lookDir = uiCanvas.transform.position - playerHead.position;
+    lookDir.y = 0;
+    if (lookDir.sqrMagnitude > 0.001f)
+    {
+        Quaternion targetRot = Quaternion.LookRotation(lookDir);
+        uiCanvas.transform.rotation = Quaternion.Slerp(uiCanvas.transform.rotation, targetRot, Time.deltaTime * 8f);
+    }
+}
+
+
+
+    // -------------------------------------------------------------------
+    // Torso tracking helper (Meta XR Body Tracking)
+    // -------------------------------------------------------------------
+    Transform GetMetaTorso()
+    {
+#if META_XR_AVAILABLE
+        if (Meta.XR.BodyTracking.MetaBody.Instance != null &&
+            Meta.XR.BodyTracking.MetaBody.Instance.TryGetJointTransform(
+                Meta.XR.BodyTracking.BodyJointType.SpineLower, out Transform torso))
+        {
+            return torso;
+        }
+#endif
+        return null;
+    }
+
+    // -------------------------------------------------------------------
+    // INPUT + QUESTION LOGIC (unchanged)
+    // -------------------------------------------------------------------
     void UpdateInput()
     {
-        float h = Input.GetAxis("Oculus_CrossPlatform_PrimaryThumbstickHorizontal"); // modify if using new input
-        bool triggerPressed = Input.GetButtonDown("Oculus_CrossPlatform_SecondaryIndexTrigger");
+        float h = OVRInput.Get(OVRInput.Axis2D.SecondaryThumbstick).x;   // ✅ right stick
+        bool triggerPressed = OVRInput.GetDown(OVRInput.Button.SecondaryIndexTrigger); // ✅ right trigger
 
-        if (h > 0.5f) currentSelection = (currentSelection + 1) % 3;
-        else if (h < -0.5f) currentSelection = (currentSelection + 2) % 3; // left wrap
+        if (h > 0.5f) currentSelection = (currentSelection + 1) % optionButtons.Count;
+        else if (h < -0.5f) currentSelection = (currentSelection - 1 + optionButtons.Count) % optionButtons.Count;
 
+        // highlight feedback (bold + scale pulse)
         for (int i = 0; i < optionButtons.Count; i++)
         {
             var txt = optionButtons[i].GetComponentInChildren<TextMeshProUGUI>();
-            if (txt != null)
-                txt.color = (i == currentSelection) ? highlightColor : normalColor;
-        }
+            if (txt == null) continue;
 
+            bool selected = (i == currentSelection);
+            txt.color = selected ? highlightColor : normalColor;
+            txt.fontStyle = selected ? FontStyles.Bold : FontStyles.Normal;
+            optionButtons[i].transform.localScale = Vector3.Lerp(
+                optionButtons[i].transform.localScale,
+                selected ? Vector3.one * 1.15f : Vector3.one,
+                Time.deltaTime * 10f
+            );
+        }
 
         if (triggerPressed && !questionAnswered)
         {
-            // Simulate clicking whichever button is selected
-            string answerLabel = optionButtons[currentSelection].GetComponentInChildren<TextMeshProUGUI>().text;
+            string answerLabel = optionButtons[currentSelection]
+                .GetComponentInChildren<TextMeshProUGUI>().text;
             SubmitAnswer(answerLabel);
         }
     }
+
 
     void GenerateNewQuestion()
     {
@@ -227,15 +256,11 @@ public class UIAnchorController : MonoBehaviour
         // Display both lines stacked
         questionText.text = $"{questionA}\n{questionB}";
 
-        // Display both lines stacked
-        questionText.text = $"{questionA}\n{questionB}";
-
         // Update visible labels for buttons
         optionButtons[0].GetComponentInChildren<TextMeshProUGUI>().text = "A";
         optionButtons[1].GetComponentInChildren<TextMeshProUGUI>().text = "B";
         optionButtons[2].GetComponentInChildren<TextMeshProUGUI>().text = "Both";
     }
-
 
     void SubmitAnswer(string answerLabel)
     {
@@ -271,7 +296,6 @@ public class UIAnchorController : MonoBehaviour
             );
         }
     }
-
 
     public void OnButtonClicked(int index)
     {

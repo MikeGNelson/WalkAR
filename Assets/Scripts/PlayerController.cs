@@ -48,7 +48,7 @@ namespace Avoidance
 
             if (isRecording)
             {
-                message.text = "Walk";
+                //message.text = "Walk";
 
                 // Detect reaching the destination
                 if (Vector3.Distance(transform.position, GC.endPoint.position) < 1.8f && !stopWriting)
@@ -98,7 +98,7 @@ namespace Avoidance
             }
             else
             {
-                message.text = "Stop";
+                //message.text = "Stop";
             }
         }
 

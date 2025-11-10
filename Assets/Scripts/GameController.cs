@@ -18,7 +18,7 @@ public class GameController : MonoBehaviour
 
     [Header("Experiment Control")]
     public int UID = 0;
-    private int currentConditionIndex = 0;
+    public int currentConditionIndex = 0;
     private List<DataManager.Conditons> conditionOrder;
     private DataManager dataManager;
     public Avoidance.PlayerController playerController;
@@ -38,7 +38,7 @@ public class GameController : MonoBehaviour
         UID = enteredUID;
         conditionOrder = GenerateLatinSquareOrder(UID);
         currentConditionIndex = 0;
-        promptText.text = $"Experiment ready. Press 'Start Trial' to begin Condition 1 of {conditionOrder.Count}.";
+        //promptText.text = $"Experiment ready. Press 'Start Trial' to begin Condition 1 of {conditionOrder.Count}.";
     }
 
     /// <summary>
@@ -54,7 +54,7 @@ public class GameController : MonoBehaviour
 
         if (currentConditionIndex >= conditionOrder.Count)
         {
-            promptText.text = "All conditions complete. Thank you!";
+            //promptText.text = "All conditions complete. Thank you!";
             return;
         }
 
@@ -72,7 +72,7 @@ public class GameController : MonoBehaviour
         // Reset player and start recording
         playerController.ResetTrialState();
         isRecording = true;
-        promptText.text = $"Condition {currentConditionIndex + 1}/{conditionOrder.Count}\nWalk to the target.";
+        //promptText.text = $"Condition {currentConditionIndex + 1}/{conditionOrder.Count}\nWalk to the target.";
 
         Debug.Log($"[GameController] Started trial: {currentCondition}");
     }
@@ -92,14 +92,14 @@ public class GameController : MonoBehaviour
 
         currentConditionIndex++;
 
-        if (currentConditionIndex < conditionOrder.Count)
-        {
-            promptText.text = $"Condition complete.\nReturn to start, then press 'Start Trial' for condition {currentConditionIndex + 1}.";
-        }
-        else
-        {
-            promptText.text = "All conditions complete. Thank you!";
-        }
+        //if (currentConditionIndex < conditionOrder.Count)
+        //{
+        //    promptText.text = $"Condition complete.\nReturn to start, then press 'Start Trial' for condition {currentConditionIndex + 1}.";
+        //}
+        //else
+        //{
+        //    promptText.text = "All conditions complete. Thank you!";
+        //}
     }
 
     private void SpawnModelForCondition(DataManager.Conditons condition)
