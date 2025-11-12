@@ -165,7 +165,7 @@ public class DataManager : MonoBehaviour
             writer.WriteLine("UID,Condition,Index,Time,Player_X,Player_Y,Player_Z," +
                  "Left_X,Left_Y,Left_Z,LeftRot_X,LeftRot_Y,LeftRot_Z,LeftRot_W," +
                  "Right_X,Right_Y,Right_Z,RightRot_X,RightRot_Y,RightRot_Z,RightRot_W," +
-                 "GazeObject,GP_X,GP_Y,GP_Z,GZ_X,GZ_Y,GZ_Z,RE_X,RE_Y,RE_Z,RED_X,RED_Y,RED_Z," +
+                 "GazeObject,GP_X,GP_Y,GP_Z,GO_X,GO_Y,GO_Z,GZ_X,GZ_Y,GZ_Z,RE_X,RE_Y,RE_Z,RED_X,RED_Y,RED_Z," +
                  "LE_X,LE_Y,LE_Z,LED_X,LED_Y,LED_Z,H_X,H_Y,H_Z,HR_X,HR_Y,HR_Z,Blinking,BlinkCount,EventTriggered");
 
 

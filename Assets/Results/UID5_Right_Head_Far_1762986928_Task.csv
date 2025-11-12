@@ -1,0 +1,8 @@
+UID,Condition,SpawnTime,AnswerTime,ResponseTime,Question,Answer,CorrectAnswer,IsCorrect,Answered
+5,Right_Head_Far,7.158,12.160,N/A,A. 29 + 16 = 45 vs B. 21 + 35 = 56,N/A,A&B,False,False
+5,Right_Head_Far,12.160,13.564,1.404,A. 59 + 22 = 81 vs B. 81 + 10 = 94,Both,A,False,True
+5,Right_Head_Far,13.564,15.397,1.833,A. 44 + 30 = 74 vs B. 68 + 16 = 80,B,A,False,True
+5,Right_Head_Far,15.397,17.148,1.751,A. 14 + 18 = 32 vs B. 32 + 15 = 49,Both,A,False,True
+5,Right_Head_Far,17.148,18.953,1.805,A. 85 + 7 = 92 vs B. 54 + 32 = 86,A,A&B,True,True
+5,Right_Head_Far,18.953,20.671,1.718,A. 13 + 48 = 61 vs B. 84 + 9 = 93,Both,A&B,True,True
+5,Right_Head_Far,20.671,23.282,2.611,A. 40 + 26 = 64 vs B. 19 + 33 = 52,Both,B,True,True

@@ -16,7 +16,7 @@ public class TrialInitState : TrialStateBase
         if (controller.initUIPrefab != null && gameController.vrRig != null)
         {
             Transform head = gameController.vrRig.transform;
-            Vector3 spawnPos = head.position + head.forward * 1.2f;
+            Vector3 spawnPos = head.position + head.forward * 2.2f + new Vector3(0,1,0);
             Quaternion spawnRot = Quaternion.LookRotation(spawnPos - head.position);
 
             uiInstance = Object.Instantiate(controller.initUIPrefab, spawnPos, spawnRot);

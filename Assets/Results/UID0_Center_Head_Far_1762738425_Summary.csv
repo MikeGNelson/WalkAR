@@ -1,2 +1,0 @@
-UID,Condition,TotalTime(s),TotalDistance(m),AverageSpeed(m/s),SpeedSD(m/s),StraightnessIndex,HeadingJitter(deg/s),AccelerationCost,AverageBlinkPerSample,TotalBlinkCount,Gaze_UI(%),Gaze_Ground(%),ScanRate(/s),AnsweredRight,AnsweredWrong,NotAnswered,Accuracy(%),MissRate(%),InverseEfficiency(ms),BalancedIndex
-0,Center_Head_Far,5.820,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0,0.0,0.0,0.00,0,0,0,0.0,0.0,0.00,0.000

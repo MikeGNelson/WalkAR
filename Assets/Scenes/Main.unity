@@ -886,6 +886,7 @@ GameObject:
   - component: {fileID: 719555280}
   - component: {fileID: 719555279}
   - component: {fileID: 719555278}
+  - component: {fileID: 719555281}
   m_Layer: 0
   m_Name: Sphere
   m_TagString: Untagged
@@ -982,6 +983,33 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 719555276}
   m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &719555281
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 719555276}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5877d63980fd46a448b944ac46cf800d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  DM: {fileID: 751923642}
+  GC: {fileID: 751923643}
+  ET: {fileID: 751923645}
+  message: {fileID: 0}
+  screenBlanker: {fileID: 0}
+  hasReachedDestination: 0
+  stopWriting: 0
+  isRecording: 0
+  eventTriggered: 0
+  startTime: 0
+  endTime: 0
+  currentSpeed: 0
+  prevTrans: {x: 0, y: 0, z: 0}
+  leftHand: {fileID: 808867828}
+  rightHand: {fileID: 1992027163}
 --- !u!1 &751923641
 GameObject:
   m_ObjectHideFlags: 0
@@ -1042,7 +1070,7 @@ MonoBehaviour:
   isRecording: 0
   UID: 0
   currentConditionIndex: 0
-  playerController: {fileID: 0}
+  playerController: {fileID: 719555281}
 --- !u!4 &751923644
 Transform:
   m_ObjectHideFlags: 0
@@ -1146,7 +1174,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   GC: {fileID: 751923643}
   DM: {fileID: 751923642}
-  PC: {fileID: 843731916}
+  PC: {fileID: 719555281}
   initUIPrefab: {fileID: 3541260521680945819, guid: 4292c572a1e58ae409d6c0a1393d8cc7, type: 3}
   activeInitUI: {fileID: 0}
 --- !u!1 &797388692
@@ -1285,7 +1313,7 @@ MeshRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 808867827}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
@@ -1376,7 +1404,6 @@ GameObject:
   - component: {fileID: 843731913}
   - component: {fileID: 843731912}
   - component: {fileID: 843731911}
-  - component: {fileID: 843731916}
   m_Layer: 0
   m_Name: '[BuildingBlock] Camera Rig'
   m_TagString: Untagged
@@ -1539,33 +1566,6 @@ Transform:
   - {fileID: 982737957}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &843731916
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 843731910}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5877d63980fd46a448b944ac46cf800d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  DM: {fileID: 751923642}
-  GC: {fileID: 751923643}
-  ET: {fileID: 751923645}
-  message: {fileID: 0}
-  screenBlanker: {fileID: 0}
-  hasReachedDestination: 0
-  stopWriting: 0
-  isRecording: 0
-  eventTriggered: 0
-  startTime: 0
-  endTime: 0
-  currentSpeed: 0
-  prevTrans: {x: 0, y: 0, z: 0}
-  leftHand: {fileID: 808867828}
-  rightHand: {fileID: 1992027163}
 --- !u!1 &855239180
 GameObject:
   m_ObjectHideFlags: 0
@@ -2913,7 +2913,7 @@ MeshRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1992027162}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
@@ -3289,7 +3289,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3226922484032497155, guid: 6c7af8be38bec9f4eb67d822fa7fadc7, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: 1.187
       objectReference: {fileID: 0}
     - target: {fileID: 3226922484032497155, guid: 6c7af8be38bec9f4eb67d822fa7fadc7, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -3670,6 +3670,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4728506495551005512, guid: 3b92c506651f56e49946f4b25e068e0a, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5893997603960931198, guid: 3b92c506651f56e49946f4b25e068e0a, type: 3}
+      propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []

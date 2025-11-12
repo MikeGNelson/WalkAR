@@ -384,12 +384,17 @@ MonoBehaviour:
   - {fileID: 6544751260079413164}
   - {fileID: 4761376155468292909}
   - {fileID: 7029016028049322488}
-  normalColor: {r: 1, g: 1, b: 1, a: 1}
+  normalColor: {r: 0, g: 0, b: 0, a: 1}
   highlightColor: {r: 0, g: 1, b: 0, a: 1}
+  baseDistance: 1.5
+  baseScale: 0.005
+  minScale: 0.005
+  maxScale: 0.01
   followHead: 1
   offsetRight: 0
   followDistance: 1.5
   torsoSmoothing: 0.9
+  rightOffsetAmount: 0.5
   questionInterval: 5
 --- !u!1 &1334807234497061576
 GameObject:
@@ -644,8 +649,9 @@ GameObject:
   - component: {fileID: 643275531828955260}
   - component: {fileID: 210218628644708203}
   - component: {fileID: 9186010311979055694}
+  - component: {fileID: 3722515603732734964}
   m_Layer: 5
-  m_Name: Background
+  m_Name: MathCanvas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -691,7 +697,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.77647066, g: 0.9803922, b: 0.96470594, a: 1}
+  m_Color: {r: 0.4037736, g: 0.4037736, b: 0.4037736, a: 0.45490196}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -708,6 +714,27 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!65 &3722515603732734964
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4567874692213703479}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 300, y: 200, z: 10}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &4688663277233047136
 GameObject:
   m_ObjectHideFlags: 0

@@ -25,6 +25,7 @@ public class TrialRunState : TrialStateBase
         bool reachedGoal = playerController.hasReachedDestination;
         bool manualEnd = OVRInput.GetDown(OVRInput.Button.PrimaryIndexTrigger, OVRInput.Controller.LTouch);
 
+
         if (reachedGoal || manualEnd)
         {
             Debug.Log("[TrialRunState] Ending trial – calling GameController.EndTrial()");

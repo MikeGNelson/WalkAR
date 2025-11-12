@@ -87,8 +87,11 @@ public class GameController : MonoBehaviour
         if (!isRecording)
             return;
 
+        ClearModels();
         isRecording = false;
         dataManager.WriteData();
+
+
 
         currentConditionIndex++;
 
@@ -114,8 +117,9 @@ public class GameController : MonoBehaviour
             if (uiController != null)
             {
                 // Assign references
-                uiController.playerHead = vrRig.transform;          // typically XR camera root
+                uiController.playerHead = dataManager.ET.playerHead;          
                 uiController.playerBody = playerController.transform;
+                uiController.leftController = playerController.leftHand;
                 uiController.dataManager = dataManager;
 
                 // Apply the correct spatial parameters for this condition

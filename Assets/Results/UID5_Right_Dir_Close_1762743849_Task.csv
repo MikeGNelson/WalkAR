@@ -1,2 +1,0 @@
-UID,Condition,SpawnTime,AnswerTime,ResponseTime,Question,Answer,CorrectAnswer,IsCorrect,Answered
-5,Right_Dir_Close,26.675,28.843,2.167,A. 18+33=53 vs B. 34+42=76,A,B,False,True
