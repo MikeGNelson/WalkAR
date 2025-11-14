@@ -387,9 +387,9 @@ MonoBehaviour:
   normalColor: {r: 0, g: 0, b: 0, a: 1}
   highlightColor: {r: 0, g: 1, b: 0, a: 1}
   baseDistance: 1.5
-  baseScale: 0.005
-  minScale: 0.005
-  maxScale: 0.01
+  baseScale: 0.0025
+  minScale: 0.0025
+  maxScale: 0.005
   followHead: 1
   offsetRight: 0
   followDistance: 1.5
