@@ -179,7 +179,7 @@ public class DataManager : MonoBehaviour
     {
         using (StreamWriter writer = new StreamWriter(pathRaw))
         {
-            writer.WriteLine("UID,Condition,Index,Time,Player_X,Player_Y,Player_Z," +
+            writer.WriteLine("UID,Condition,Index,Time,Speed,Player_X,Player_Y,Player_Z," +
                  "Left_X,Left_Y,Left_Z,LeftRot_X,LeftRot_Y,LeftRot_Z,LeftRot_W," +
                  "Right_X,Right_Y,Right_Z,RightRot_X,RightRot_Y,RightRot_Z,RightRot_W," +
                  "GazeObject,GP_X,GP_Y,GP_Z,GO_X,GO_Y,GO_Z,GZ_X,GZ_Y,GZ_Z,RE_X,RE_Y,RE_Z,RED_X,RED_Y,RED_Z," +
@@ -189,7 +189,20 @@ public class DataManager : MonoBehaviour
             for (int i = 0; i < records.Count; i++)
             {
                 var r = records[i];
-                writer.WriteLine($"{UId},{conditions},{i},{r.time}," +
+
+                float speed = 0f;
+                if (i > 0)
+                {
+                    var prev = records[i - 1];
+
+                    float dt = r.time - prev.time;
+                    if (dt > 0f)
+                    {
+                        Vector3 delta = r.position - prev.position;
+                        speed = delta.magnitude / dt;
+                    }
+                }
+                writer.WriteLine($"{UId},{conditions},{i},{r.time},{speed}," +
                  $"{r.position.x},{r.position.y},{r.position.z}," +
                  $"{r.leftHandPos.x},{r.leftHandPos.y},{r.leftHandPos.z}," +
                  $"{r.leftHandRot.x},{r.leftHandRot.y},{r.leftHandRot.z},{r.leftHandRot.w}," +
