@@ -1,0 +1,3 @@
+UID,Condition,SpawnTime,AnswerTime,ResponseTime,Question,Answer,CorrectAnswer,IsCorrect,Answered
+1,Center_Head_Far,3.955,8.956,N/A,A. 80 + 10 = 90 vs B. 81 + 10 = 82,N/A,A,False,False
+1,Center_Head_Far,8.956,10.498,1.542,A. 54 + 11 = 65 vs B. 67 + 14 = 90,A,A,True,True

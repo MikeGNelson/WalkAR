@@ -1,0 +1,4 @@
+UID,Condition,SpawnTime,AnswerTime,ResponseTime,Question,Answer,CorrectAnswer,IsCorrect,Answered
+2,Center_Head_Close,37.075,38.689,1.614,A. 27 + 56 = 83 vs B. 10 + 72 = 82,A,A&B,True,True
+2,Center_Head_Close,38.689,41.696,3.007,A. 37 + 34 = 71 vs B. 47 + 24 = 71,B,A&B,True,True
+2,Center_Head_Close,41.696,43.213,1.517,A. 16 + 62 = 70 vs B. 19 + 17 = 36,A,B,False,True

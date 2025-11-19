@@ -1,0 +1,8 @@
+UID,Condition,SpawnTime,AnswerTime,ResponseTime,Question,Answer,CorrectAnswer,IsCorrect,Answered
+2,Center_Dir_Close,4.477,9.478,N/A,A. 23 + 22 = 45 vs B. 25 + 19 = 40,N/A,A,False,False
+2,Center_Dir_Close,9.478,14.478,N/A,A. 50 + 39 = 89 vs B. 48 + 35 = 83,N/A,A&B,False,False
+2,Center_Dir_Close,14.478,19.490,N/A,A. 33 + 42 = 75 vs B. 35 + 41 = 76,N/A,A&B,False,False
+2,Center_Dir_Close,19.490,24.491,N/A,A. 24 + 65 = 89 vs B. 43 + 29 = 72,N/A,A&B,False,False
+2,Center_Dir_Close,24.491,29.502,N/A,A. 87 + 5 = 94 vs B. 62 + 16 = 78,N/A,B,False,False
+2,Center_Dir_Close,29.502,34.505,N/A,A. 66 + 19 = 89 vs B. 69 + 12 = 81,N/A,B,False,False
+2,Center_Dir_Close,34.505,37.727,3.222,A. 57 + 18 = 75 vs B. 70 + 15 = 78,B,A,False,True

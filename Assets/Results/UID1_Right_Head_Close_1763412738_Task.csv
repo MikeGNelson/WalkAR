@@ -1,0 +1,2 @@
+UID,Condition,SpawnTime,AnswerTime,ResponseTime,Question,Answer,CorrectAnswer,IsCorrect,Answered
+1,Right_Head_Close,42.229,42.772,0.543,A. 18 + 64 = 82 vs B. 57 + 12 = 71,A,A,True,True

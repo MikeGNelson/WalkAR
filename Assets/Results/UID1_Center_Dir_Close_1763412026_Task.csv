@@ -1,0 +1,4 @@
+UID,Condition,SpawnTime,AnswerTime,ResponseTime,Question,Answer,CorrectAnswer,IsCorrect,Answered
+1,Center_Dir_Close,14.217,19.229,N/A,A. 16 + 35 = 51 vs B. 85 + 8 = 93,N/A,A&B,False,False
+1,Center_Dir_Close,19.229,24.241,N/A,A. 61 + 25 = 86 vs B. 84 + 9 = 84,N/A,A,False,False
+1,Center_Dir_Close,24.241,29.253,N/A,A. 80 + 10 = 90 vs B. 10 + 41 = 47,N/A,A,False,False

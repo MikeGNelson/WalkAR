@@ -19,18 +19,36 @@ public class UIAnchorController : MonoBehaviour
     public Color normalColor = Color.black;
     public Color highlightColor = Color.green;
 
+    public Color outlineNormalColor = Color.black;
+    public Color outlineHighlightColor = Color.green;
+
+    public TextMeshProUGUI countdownText;
+
     [Header("Scaling Settings")]
-    public float baseDistance = 1.5f;   // Reference distance for scale = 1
-    public float baseScale = 1.0f;      // Scale at baseDistance
-    public float minScale = 0.8f;       // Minimum allowed scale
-    public float maxScale = 2.0f;       // Maximum allowed scale
+    public float baseDistance = 1.5f;   // reference distance for scale = 1
+    public float baseScale = 0.01f;     // scale at baseDistance
+    public float minScale = 0.01f;      // minimum allowed scale
+    public float maxScale = 0.06f;      // maximum allowed scale
 
     [Header("Settings")]
-    public bool followHead = true;  // false = follow torso
+    public bool followHead = true;      // false = follow torso / left controller
     public bool offsetRight = false;
     public float followDistance = 1.5f;
     public float torsoSmoothing = 0.9f;
-    public float rightOffsetAmount = 0.5f;
+    public float rightOffsetAngle = 10f; // visual right offset angle in degrees
+    public float baseYawOffset = 5f;     // left offset in degrees (torso / left controller only)
+
+    public float pitchOffsetDegrees = 20f;
+
+    [Header("Smoothing")]
+    public float positionSmoothTime = 0.1f;
+    public float rotationSmoothSpeed = 10f;
+    public float scaleSmoothSpeed = 10f;
+
+    private Vector3 smoothedPos;
+    private Vector3 positionVelocity;
+    private Quaternion smoothedRot;
+    private float currentScale = 1f;
 
     [Header("Task Timing")]
     public float questionInterval = 5f;
@@ -42,38 +60,46 @@ public class UIAnchorController : MonoBehaviour
     private bool questionAnswered = false;
     private string correctAnswer;
 
-    // For torso estimation
+    [Header("Question Fade")]
+    public float questionFadeDuration = 0.3f;
     private Queue<Vector3> movementHistory = new Queue<Vector3>();
     private int historyLength = 30;
     private Vector3 avgDirection = Vector3.forward;
+
+    private Coroutine questionFadeRoutine;
 
     void Start()
     {
         nextQuestionTime = Time.time + questionInterval;
         GenerateNewQuestion();
+
+        if (uiCanvas != null)
+        {
+            smoothedPos = uiCanvas.transform.position;
+            smoothedRot = uiCanvas.transform.rotation;
+            currentScale = uiCanvas.transform.localScale.x;
+        }
     }
 
     void Update()
     {
         UpdateAnchor();
         UpdateInput();
+        UpdateCountdownUI();
 
         if (Time.time >= nextQuestionTime)
         {
-            LogIfUnanswered();
-            GenerateNewQuestion();
-            nextQuestionTime = Time.time + questionInterval;
+            HandleQuestionTimeout();
         }
     }
 
     public void ApplyCondition(DataManager.Conditons condition)
     {
-        // Reset defaults
+        // reset defaults
         followHead = true;
         offsetRight = false;
         followDistance = 1.5f;
 
-        // Parse enum
         switch (condition)
         {
             case DataManager.Conditons.Center_Head_Close:
@@ -125,80 +151,137 @@ public class UIAnchorController : MonoBehaviour
                 break;
         }
 
-        // Optional debug feedback
         Debug.Log($"[UIAnchorController] Applied Condition: {condition} " +
                   $"→ HeadFollow:{followHead}, RightOffset:{offsetRight}, Dist:{followDistance}");
     }
 
     // -------------------------------------------------------------------
-    // UPDATED ANCHOR LOGIC (smooth follow + torso tracking)
+    // Anchor logic with torso-only base yaw offset + optional right offset
     // -------------------------------------------------------------------
     void UpdateAnchor()
     {
         if (uiCanvas == null || playerHead == null)
             return;
 
-        // Which transform to base from
+        // anchor: head or torso
         Transform anchor = followHead ? playerHead : playerBody;
 
-        // Decide forward vector
+        // forward direction
         Vector3 forward;
         if (followHead)
         {
-            // smooth yaw-only head direction
-            Vector3 flatForward = new Vector3(playerHead.forward.x, 0, playerHead.forward.z).normalized;
+            Vector3 flatForward = new Vector3(playerHead.forward.x, 0f, playerHead.forward.z).normalized;
             forward = flatForward;
         }
         else
         {
-            // try Meta torso joint first
             Transform torso = GetMetaTorso();
             if (torso != null)
-                forward = new Vector3(torso.forward.x, 0, torso.forward.z).normalized;
+            {
+                forward = new Vector3(torso.forward.x, 0f, torso.forward.z).normalized;
+            }
             else
             {
-                // fallback to right controller forward
-                //forward = new Vector3(-leftController.forward.x, 0, leftController.forward.z).normalized;
-                Vector3 chestForward = -leftController.up; // up points away from chest
-                forward = new Vector3(chestForward.x, 0, chestForward.z).normalized;
+                Vector3 chestForward = -leftController.up;
+                forward = new Vector3(chestForward.x, 0f, chestForward.z).normalized;
             }
-                
+
+            // apply base yaw offset only when following torso / left controller
+            if (Mathf.Abs(baseYawOffset) > 0.0001f)
+            {
+                forward = Quaternion.AngleAxis(-baseYawOffset, Vector3.up) * forward;
+            }
         }
 
-        // Compute position + offset
-        Vector3 basePos = anchor.position + forward * followDistance;
-        Vector3 rightOffset = offsetRight ? Vector3.Cross(Vector3.up, forward).normalized * rightOffsetAmount : Vector3.zero;
-        Vector3 targetPos = basePos + rightOffset + Vector3.up * 0.25f;
+        Vector3 anchorPos = anchor.position;
 
-        // Smooth follow
-        uiCanvas.transform.position = Vector3.Lerp(uiCanvas.transform.position, targetPos, Time.deltaTime * 8f);
+        // base position in front of anchor
+        Vector3 basePos = anchorPos + forward * followDistance;
 
-        // Face toward player
-        Vector3 lookDir = uiCanvas.transform.position - playerHead.position;
-        lookDir.y = 0;
-        if (lookDir.sqrMagnitude > 0.001f)
+        // right offset by fixed visual angle (same angle for all right-offset conditions)
+        Vector3 right = Vector3.Cross(Vector3.up, forward).normalized;
+        float lateralOffset = 0f;
+        if (offsetRight)
         {
-            Quaternion targetRot = Quaternion.LookRotation(lookDir);
-            uiCanvas.transform.rotation = Quaternion.Slerp(uiCanvas.transform.rotation, targetRot, Time.deltaTime * 8f);
+            float angleRad = rightOffsetAngle * Mathf.Deg2Rad;
+            lateralOffset = Mathf.Tan(angleRad) * followDistance;
         }
 
-        // === Distance-based scaling ===
-        float distance = Vector3.Distance(playerHead.position, uiCanvas.transform.position);
+        // vertical offset:
+        // right-offset: -0.2, others: -0.5
+        Vector3 verticalOffset = offsetRight ? Vector3.up * -0.2f : Vector3.up * -0.5f;
 
+        Vector3 targetPos = basePos + right * lateralOffset + verticalOffset;
 
-        // scale grows with distance
-        float scaleFactor = baseScale * (distance / baseDistance);
-        scaleFactor = Mathf.Clamp(scaleFactor, minScale, maxScale);
+        // keep radius fixed, smooth only direction
+        Vector3 desiredOffset = targetPos - anchorPos;
+        if (desiredOffset.sqrMagnitude < 0.0001f)
+        {
+            desiredOffset = forward * followDistance;
+        }
 
-        // smooth scaling
-        uiCanvas.transform.localScale = Vector3.Lerp(
-            uiCanvas.transform.localScale,
-            Vector3.one * scaleFactor,
-            Time.deltaTime * 6f
-        );
+        float radius = desiredOffset.magnitude;
+        Vector3 desiredDir = desiredOffset / radius;
+
+        Vector3 currentOffset = smoothedPos - anchorPos;
+        Vector3 currentDir;
+        if (currentOffset.sqrMagnitude < 0.0001f)
+        {
+            currentDir = desiredDir;
+        }
+        else
+        {
+            currentDir = currentOffset.normalized;
+        }
+
+        float dirLerp = Mathf.Clamp01(Time.deltaTime / Mathf.Max(positionSmoothTime, 0.0001f));
+        Vector3 newDir = Vector3.Slerp(currentDir, desiredDir, dirLerp);
+
+        smoothedPos = anchorPos + newDir * radius;
+        uiCanvas.transform.position = smoothedPos;
+
+        // rotation
+        Quaternion targetRot;
+        if (!offsetRight)
+        {
+            Vector3 lookDir = smoothedPos - playerHead.position;
+            lookDir.y = 0f;
+            if (lookDir.sqrMagnitude > 0.001f)
+            {
+                Quaternion baseRot = Quaternion.LookRotation(lookDir, Vector3.up);
+                Quaternion pitchOffset = Quaternion.AngleAxis(pitchOffsetDegrees, Vector3.right);
+                targetRot = baseRot * pitchOffset;
+            }
+            else
+            {
+                targetRot = uiCanvas.transform.rotation;
+            }
+        }
+        else
+        {
+            if (forward.sqrMagnitude > 0.001f)
+            {
+                targetRot = Quaternion.LookRotation(forward, Vector3.up);
+            }
+            else
+            {
+                targetRot = uiCanvas.transform.rotation;
+            }
+        }
+
+        float rotLerp = 1f - Mathf.Exp(-rotationSmoothSpeed * Time.deltaTime);
+        smoothedRot = Quaternion.Slerp(smoothedRot, targetRot, rotLerp);
+        uiCanvas.transform.rotation = smoothedRot;
+
+        // distance-based scaling
+        float distance = Vector3.Distance(playerHead.position, smoothedPos);
+        float targetScale = baseScale * (distance / baseDistance);
+        targetScale = Mathf.Clamp(targetScale, minScale, maxScale);
+
+        float scaleLerp = 1f - Mathf.Exp(-scaleSmoothSpeed * Time.deltaTime);
+        currentScale = Mathf.Lerp(currentScale, targetScale, scaleLerp);
+        uiCanvas.transform.localScale = Vector3.one * currentScale;
     }
-
-
 
     // -------------------------------------------------------------------
     // Torso tracking helper (Meta XR Body Tracking)
@@ -217,7 +300,7 @@ public class UIAnchorController : MonoBehaviour
     }
 
     // -------------------------------------------------------------------
-    // INPUT + QUESTION LOGIC (unchanged)
+    // INPUT + QUESTION LOGIC (unchanged except SubmitAnswer timing)
     // -------------------------------------------------------------------
     private float lastInputTime = 0f;
     private const float inputCooldown = 0.25f;
@@ -232,38 +315,49 @@ public class UIAnchorController : MonoBehaviour
 
         bool horizontalDominant = Mathf.Abs(rightStick.x) > Mathf.Abs(rightStick.y);
 
-        // Handle thumbstick directional input with cooldown
         if (Time.time - lastInputTime > inputCooldown)
         {
-            //if (rightStick.x < -stickThreshold) // Left → A
-            //{
-            //    currentSelection = 0;
-            //    lastInputTime = Time.time;
-            //}
-            //else if (Mathf.Abs(rightStick.y) > stickThreshold) // Up/Down → B
-            //{
-            //    currentSelection = 1;
-            //    lastInputTime = Time.time;
-            //}
-            //else if (rightStick.x > stickThreshold) // Right → Both
-            //{
-            //    currentSelection = 2;
-            //    lastInputTime = Time.time;
-            //}
+            bool selectionChanged = false;
+
             if (horizontalDominant)
             {
-                if (rightStick.x < -0.5f) currentSelection = 0; // Left → A
-                else if (rightStick.x > 0.5f) currentSelection = 2; // Right → Both
+                if (rightStick.x < stickThreshold * -1f)
+                {
+                    if (currentSelection != 0)
+                    {
+                        currentSelection = 0;
+                        selectionChanged = true;
+                    }
+                }
+                else if (rightStick.x > stickThreshold)
+                {
+                    if (currentSelection != 2)
+                    {
+                        currentSelection = 2;
+                        selectionChanged = true;
+                    }
+                }
             }
             else
             {
-                if (Mathf.Abs(rightStick.y) > 0.5f) currentSelection = 1; // Up/Down → B
+                if (Mathf.Abs(rightStick.y) > stickThreshold)
+                {
+                    if (currentSelection != 1)
+                    {
+                        currentSelection = 1;
+                        selectionChanged = true;
+                    }
+                }
             }
 
-            lastInputTime = Time.time;
+            if (selectionChanged)
+            {
+                lastInputTime = Time.time;
+                ShortMoveHaptic();
+            }
         }
 
-        // Highlight current selection
+        // highlight current selection
         for (int i = 0; i < optionButtons.Count; i++)
         {
             var button = optionButtons[i];
@@ -271,27 +365,25 @@ public class UIAnchorController : MonoBehaviour
             var outline = button.GetComponent<Outline>();
             bool selected = (i == currentSelection);
 
-            // Visual highlight: text color + bold font
             if (txt != null)
             {
-                txt.color = selected ? highlightColor : normalColor;
-                txt.overrideColorTags = true;
                 txt.fontStyle = selected ? FontStyles.Bold : FontStyles.Normal;
             }
 
-            // Enable outline if selected
             if (outline != null)
-                outline.enabled = selected;
+            {
+                outline.enabled = true;
+                outline.effectColor = selected ? outlineHighlightColor : outlineNormalColor;
+            }
 
-            // Apply scale change for selected button
             var rect = button.GetComponent<RectTransform>();
             if (rect != null)
             {
-                rect.localScale = selected ? Vector3.one * 1.15f : Vector3.one; // Grow slightly when selected
+                rect.localScale = selected ? Vector3.one * 1.15f : Vector3.one;
             }
         }
 
-        // Right trigger → submit
+        // right trigger → submit (question changes only on timeout)
         if (rightTriggerPressed && !questionAnswered)
         {
             string answerLabel = optionButtons[currentSelection]
@@ -299,35 +391,123 @@ public class UIAnchorController : MonoBehaviour
             SubmitAnswer(answerLabel);
         }
 
-        // Left trigger → end trial
+        // left trigger → end trial
         if (leftTriggerPressed)
         {
             Debug.Log("[UIAnchorController] Left trigger pressed — ending trial.");
-            //dataManager.LogEvent("TrialEndedViaLeftTrigger");
-            // Optionally notify your TrialController here:
-            // controller.ChangeState(new TrialEndState(controller));
         }
     }
 
+    void UpdateCountdownUI()
+    {
+        if (countdownText == null)
+            return;
 
+        float remaining = nextQuestionTime - Time.time;
 
+        if (remaining < 0f)
+            remaining = 0f;
+
+        int seconds = Mathf.CeilToInt(remaining);
+
+        if (seconds <= 0)
+        {
+            countdownText.text = "";
+        }
+        else
+        {
+            countdownText.text = seconds.ToString();
+        }
+    }
+
+    void HandleQuestionTimeout()
+    {
+        try
+        {
+            if (!questionAnswered)
+            {
+                LogIfUnanswered();
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError("[UIAnchorController] AddMathTask error in HandleQuestionTimeout: " + e.Message);
+        }
+
+        GenerateNewQuestion();
+        nextQuestionTime = Time.time + questionInterval;
+    }
+
+    void SetQuestionTextWithFade(string newText)
+    {
+        if (questionText == null)
+            return;
+
+        if (questionFadeRoutine != null)
+        {
+            StopCoroutine(questionFadeRoutine);
+        }
+
+        questionFadeRoutine = StartCoroutine(FadeQuestionTextCoroutine(newText));
+    }
+
+    IEnumerator FadeQuestionTextCoroutine(string newText)
+    {
+        if (questionText == null)
+            yield break;
+
+        float duration = questionFadeDuration;
+        if (duration <= 0f)
+        {
+            questionText.text = newText;
+            yield break;
+        }
+
+        Color c = questionText.color;
+
+        float t = 0f;
+        float startAlpha = c.a;
+        while (t < duration)
+        {
+            t += Time.deltaTime;
+            float alpha = Mathf.Lerp(startAlpha, 0f, t / duration);
+            c.a = alpha;
+            questionText.color = c;
+            yield return null;
+        }
+
+        c.a = 0f;
+        questionText.color = c;
+        questionText.text = newText;
+
+        t = 0f;
+        while (t < duration)
+        {
+            t += Time.deltaTime;
+            float alpha = Mathf.Lerp(0f, 1f, t / duration);
+            c.a = alpha;
+            questionText.color = c;
+            yield return null;
+        }
+
+        c.a = 1f;
+        questionText.color = c;
+
+        questionFadeRoutine = null;
+    }
 
     void GenerateNewQuestion()
     {
         questionAnswered = false;
         questionSpawnTime = Time.time;
-        //currentSelection = 0;
 
-        // Randomly choose which question(s) will be correct:
-        // 0 = only A true, 1 = only B true, 2 = both true
         int truthType = Random.Range(0, 3);
 
-        // Generate operands that guarantee sums < 100
         int a1 = Random.Range(10, 90);
-        int b1 = Random.Range(10, 90 - a1); // ensures a1 + b1 < 100
+        int b1 = Random.Range(10, 90 - a1);
 
         int a2 = Random.Range(10, 90);
-        int b2 = Random.Range(10, 90 - a2); // ensures a2 + b2 < 100
+        int b2 = Random.Range(10, 90 - a2);
 
         int correctSumA = a1 + b1;
         int correctSumB = a2 + b2;
@@ -337,17 +517,16 @@ public class UIAnchorController : MonoBehaviour
 
         switch (truthType)
         {
-            case 0: // only A is true
+            case 0:
                 eqA_correct = true;
                 eqB_correct = false;
                 resultA = correctSumA;
-                // create wrong but still <100
                 do { resultB = correctSumB + Random.Range(-10, 11); }
                 while (resultB == correctSumB || resultB >= 100 || resultB < 0);
                 correctAnswer = "A";
                 break;
 
-            case 1: // only B is true
+            case 1:
                 eqA_correct = false;
                 eqB_correct = true;
                 do { resultA = correctSumA + Random.Range(-10, 11); }
@@ -356,7 +535,7 @@ public class UIAnchorController : MonoBehaviour
                 correctAnswer = "B";
                 break;
 
-            default: // both true
+            default:
                 eqA_correct = true;
                 eqB_correct = true;
                 resultA = correctSumA;
@@ -365,12 +544,12 @@ public class UIAnchorController : MonoBehaviour
                 break;
         }
 
-        // Format text for display
         questionA = $"A. {a1} + {b1} = {resultA}";
         questionB = $"B. {a2} + {b2} = {resultB}";
-        questionText.text = $"{questionA}\n{questionB}";
 
-        // Update button labels
+        string newText = $"{questionA}\n{questionB}";
+        SetQuestionTextWithFade(newText);
+
         optionButtons[0].GetComponentInChildren<TextMeshProUGUI>().text = "A";
         optionButtons[1].GetComponentInChildren<TextMeshProUGUI>().text = "B";
         optionButtons[2].GetComponentInChildren<TextMeshProUGUI>().text = "Both";
@@ -378,42 +557,73 @@ public class UIAnchorController : MonoBehaviour
         Debug.Log($"[UIAnchorController] New Question | TruthType:{truthType} | Correct:{correctAnswer}");
     }
 
-
     void SubmitAnswer(string answerLabel)
     {
+        if (questionAnswered) return;
+
+        Debug.Log("[UIAnchorController] SubmitAnswer: " + answerLabel);
+
+        ConfirmHaptic();
         questionAnswered = true;
         float answerTime = Time.time;
 
         bool correct = (answerLabel.Contains("A") && correctAnswer.Contains("A")) ||
                        (answerLabel.Contains("B") && correctAnswer.Contains("B"));
 
-        dataManager.AddMathTask(
-            questionSpawnTime,
-            answerTime,
-            $"{questionA} vs {questionB}",
-            answerLabel,
-            correctAnswer,
-            correct,
-            true
-        );
+        try
+        {
+            if (dataManager != null)
+            {
+                dataManager.AddMathTask(
+                    questionSpawnTime,
+                    answerTime,
+                    $"{questionA} vs {questionB}",
+                    answerLabel,
+                    correctAnswer,
+                    correct,
+                    true
+                );
+            }
+            else
+            {
+                Debug.LogError("[UIAnchorController] dataManager is NULL in SubmitAnswer");
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError("[UIAnchorController] AddMathTask error in SubmitAnswer: " + e.Message);
+        }
 
-        GenerateNewQuestion();
-        nextQuestionTime = Time.time + questionInterval;
+        // question will change only in HandleQuestionTimeout
     }
 
     void LogIfUnanswered()
     {
         if (!questionAnswered)
         {
-            dataManager.AddMathTask(
-                questionSpawnTime,
-                Time.time,
-                $"{questionA} vs {questionB}",
-                "N/A",
-                correctAnswer,
-                false,
-                false
-            );
+            try
+            {
+                if (dataManager != null)
+                {
+                    dataManager.AddMathTask(
+                        questionSpawnTime,
+                        Time.time,
+                        $"{questionA} vs {questionB}",
+                        "N/A",
+                        correctAnswer,
+                        false,
+                        false
+                    );
+                }
+                else
+                {
+                    Debug.LogError("[UIAnchorController] dataManager is NULL in LogIfUnanswered");
+                }
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError("[UIAnchorController] AddMathTask error in LogIfUnanswered: " + e.Message);
+            }
         }
     }
 
@@ -424,5 +634,22 @@ public class UIAnchorController : MonoBehaviour
             var label = optionButtons[index].GetComponentInChildren<TextMeshProUGUI>().text;
             SubmitAnswer(label);
         }
+    }
+
+    private IEnumerator HapticPulse(float amplitude, float duration, OVRInput.Controller controller)
+    {
+        OVRInput.SetControllerVibration(0.5f, amplitude, controller);
+        yield return new WaitForSeconds(duration);
+        OVRInput.SetControllerVibration(0f, 0f, controller);
+    }
+
+    private void ShortMoveHaptic()
+    {
+        StartCoroutine(HapticPulse(0.3f, 0.05f, OVRInput.Controller.RTouch));
+    }
+
+    private void ConfirmHaptic()
+    {
+        StartCoroutine(HapticPulse(0.9f, 0.2f, OVRInput.Controller.RTouch));
     }
 }

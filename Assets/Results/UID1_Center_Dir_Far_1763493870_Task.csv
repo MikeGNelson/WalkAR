@@ -1,0 +1,2 @@
+UID,Condition,SpawnTime,AnswerTime,ResponseTime,Question,Answer,CorrectAnswer,IsCorrect,Answered
+1,Center_Dir_Far,33.718,36.085,2.366,A. 82 + 9 = 91 vs B. 33 + 53 = 95,A,A,True,True

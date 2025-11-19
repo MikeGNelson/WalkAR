@@ -16,6 +16,9 @@ public class DataManager : MonoBehaviour
     public string conditionText = "Default";
     public Conditons conditions;
 
+    [Header("Logging Control")]
+    public bool enableLogging = true;
+
     private string basePath;
     private string pathRaw;
     private string pathSummary;
@@ -24,6 +27,9 @@ public class DataManager : MonoBehaviour
     [Header("Data Buffers")]
     public List<Record> records = new List<Record>();
     public List<MathTask> mathTasks = new List<MathTask>();
+
+
+
 
     // ---------- STRUCTS ----------
 
@@ -97,7 +103,8 @@ public class DataManager : MonoBehaviour
 #if UNITY_EDITOR
         basePath = Application.dataPath + "/Results/";
 #else
-        basePath = Application.persistentDataPath + "/Results/";
+        basePath = 
+        persistentDataPath + "/Results/";
 #endif
         Directory.CreateDirectory(basePath);
         CreatePaths();
@@ -126,12 +133,14 @@ public class DataManager : MonoBehaviour
                       Vector3 rightHandPos, Quaternion rightHandRot,
                       int condition, DataPoint eyeData, bool eventTriggered)
     {
+        if (!enableLogging) return;
         records.Add(new Record(Time.time, playerPos, leftHandPos, leftHandRot, rightHandPos, rightHandRot, condition, eyeData, eventTriggered));
     }
 
 
     public void AddMathTask(float spawnTime, float answerTime, string question, string answer, string correct, bool isCorrect, bool answered)
     {
+        if (!enableLogging) return;
         mathTasks.Add(new MathTask(spawnTime, answerTime, question, answer, correct, isCorrect, answered));
     }
 
@@ -139,6 +148,14 @@ public class DataManager : MonoBehaviour
 
     public void WriteData()
     {
+        if (!enableLogging)  
+        {
+            Debug.LogWarning("Logging disabled, WriteData skipped.");
+            records.Clear();
+            mathTasks.Clear();
+            return;
+        }
+
         if (records.Count == 0)
         {
             Debug.LogWarning("No data to write!");

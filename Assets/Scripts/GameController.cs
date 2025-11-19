@@ -23,6 +23,8 @@ public class GameController : MonoBehaviour
     private DataManager dataManager;
     public Avoidance.PlayerController playerController;
 
+
+
     private void Start()
     {
         dataManager = FindFirstObjectByType<DataManager>();
