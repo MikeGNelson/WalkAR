@@ -13,6 +13,7 @@ namespace Avoidance
         public ETRecorder ET;
         public TextMeshProUGUI message;
         public GameObject screenBlanker;
+        public Transform environmentContainer;
 
         [Header("Runtime Flags")]
         public bool hasReachedDestination = false;
@@ -26,6 +27,7 @@ namespace Avoidance
         public float currentSpeed;
         public Vector3 prevTrans = Vector3.zero;
         private float previousTime;
+        public Vector3 worldOffset = Vector3.zero;
 
         [Header("Tracked Hands")]
         public Transform leftHand;
@@ -44,6 +46,9 @@ namespace Avoidance
 
         void FixedUpdate()
         {
+
+            //TODO Set the calcuate the distance moved, save the offset, and set the environment container
+
             isRecording = GC.isRecording;
 
             if (isRecording)
@@ -83,6 +88,24 @@ namespace Avoidance
                     float distance = Vector3.Distance(prevTrans, transform.position);
                     currentSpeed = distance / deltaTime;
 
+                    Vector3 deltaDistance = transform.position - prevTrans;
+
+                    bool trackingJump = deltaDistance.magnitude > 0.3f;
+
+                    if(!trackingJump)
+                    {
+                        worldOffset += deltaDistance;
+                    }
+
+                    else
+                    {
+                        if(environmentContainer != null)
+                        {
+                            environmentContainer.position -= deltaDistance;
+                        }
+                    }
+                    
+
                     // Log positional + eye data
                     var eyeData = ET.GetEyeData();
                     DM.AddRecord(transform.position,
@@ -90,7 +113,20 @@ namespace Avoidance
                                  leftHand != null ? leftHand.rotation : Quaternion.identity,
                                  rightHand != null ? rightHand.position : Vector3.zero,
                                  rightHand != null ? rightHand.rotation : Quaternion.identity,
-                                 (int)DM.conditions, eyeData, eventTriggered);
+                                 (int)DM.conditions, eyeData, eventTriggered, 
+                                 worldOffset,
+                                 (GC != null &&
+                                     GC.modelsList != null &&
+                                     GC.modelsList.Count > 0 &&
+                                     GC.modelsList[0] != null)
+                                        ? GC.modelsList[0].transform.position
+                                        : Vector3.zero,
+                                 (GC != null &&
+                                     GC.modelsList != null &&
+                                     GC.modelsList.Count > 0 &&
+                                     GC.modelsList[0] != null)
+                                        ? GC.modelsList[0].transform.rotation
+                                        : Quaternion.identity);
 
                     prevTrans = transform.position;
                     previousTime = Time.time;

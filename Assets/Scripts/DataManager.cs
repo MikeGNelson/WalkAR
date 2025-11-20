@@ -44,9 +44,13 @@ public class DataManager : MonoBehaviour
         public int condition;
         public bool eventTriggered;
         public DataPoint eyeData;
+        public Vector3 worldOffset;
+        public Vector3 uiPosition;
+        public Quaternion uiRotation;
 
         public Record(float _time, Vector3 _position, Vector3 _leftPos, Quaternion _leftRot,
-              Vector3 _rightPos, Quaternion _rightRot, int _condition, DataPoint _eyeData, bool _eventTriggered)
+              Vector3 _rightPos, Quaternion _rightRot, int _condition, DataPoint _eyeData, bool _eventTriggered,
+              Vector3 _worldOffset, Vector3 _uiPosition, Quaternion _uiRotation)
         {
             time = _time;
             position = _position;
@@ -57,6 +61,10 @@ public class DataManager : MonoBehaviour
             condition = _condition;
             eyeData = _eyeData;
             eventTriggered = _eventTriggered;
+            worldOffset = _worldOffset;
+            uiPosition = _uiPosition;
+            uiRotation = _uiRotation;
+
         }
     }
 
@@ -104,7 +112,7 @@ public class DataManager : MonoBehaviour
         basePath = Application.dataPath + "/Results/";
 #else
         basePath = 
-        persistentDataPath + "/Results/";
+        Application.persistentDataPath + "/Results/";
 #endif
         Directory.CreateDirectory(basePath);
         CreatePaths();
@@ -131,10 +139,10 @@ public class DataManager : MonoBehaviour
 
     public void AddRecord(Vector3 playerPos, Vector3 leftHandPos, Quaternion leftHandRot,
                       Vector3 rightHandPos, Quaternion rightHandRot,
-                      int condition, DataPoint eyeData, bool eventTriggered)
+                      int condition, DataPoint eyeData, bool eventTriggered, Vector3 worldOffset, Vector3 uiPosition, Quaternion uiRotation)
     {
         if (!enableLogging) return;
-        records.Add(new Record(Time.time, playerPos, leftHandPos, leftHandRot, rightHandPos, rightHandRot, condition, eyeData, eventTriggered));
+        records.Add(new Record(Time.time, playerPos, leftHandPos, leftHandRot, rightHandPos, rightHandRot, condition, eyeData, eventTriggered, worldOffset, uiPosition, uiRotation));
     }
 
 
@@ -183,7 +191,9 @@ public class DataManager : MonoBehaviour
                  "Left_X,Left_Y,Left_Z,LeftRot_X,LeftRot_Y,LeftRot_Z,LeftRot_W," +
                  "Right_X,Right_Y,Right_Z,RightRot_X,RightRot_Y,RightRot_Z,RightRot_W," +
                  "GazeObject,GP_X,GP_Y,GP_Z,GO_X,GO_Y,GO_Z,GZ_X,GZ_Y,GZ_Z,RE_X,RE_Y,RE_Z,RED_X,RED_Y,RED_Z," +
-                 "LE_X,LE_Y,LE_Z,LED_X,LED_Y,LED_Z,H_X,H_Y,H_Z,HR_X,HR_Y,HR_Z,Blinking,BlinkCount,EventTriggered");
+                 "LE_X,LE_Y,LE_Z,LED_X,LED_Y,LED_Z,H_X,H_Y,H_Z,HR_X,HR_Y,HR_Z,Blinking,BlinkCount,EventTriggered," +
+                 "World_Offset_X,World_Offset_Y,World_Offset_Z," +
+                 "UI_X,UI_Y,UI_Z,UI_Rot_X,UI_Rot_Y,UI_Rot_Z, UI_Rot_W");
 
 
             for (int i = 0; i < records.Count; i++)
@@ -208,7 +218,10 @@ public class DataManager : MonoBehaviour
                  $"{r.leftHandRot.x},{r.leftHandRot.y},{r.leftHandRot.z},{r.leftHandRot.w}," +
                  $"{r.rightHandPos.x},{r.rightHandPos.y},{r.rightHandPos.z}," +
                  $"{r.rightHandRot.x},{r.rightHandRot.y},{r.rightHandRot.z},{r.rightHandRot.w}," +
-                 $"{r.eyeData.JoinValues()},{r.eventTriggered}");
+                 $"{r.eyeData.JoinValues()},{r.eventTriggered}" +
+                 $"{r.worldOffset.x},{r.worldOffset.y},{r.worldOffset.z}," +
+                 $"{r.uiPosition.x},{r.uiPosition.y},{r.uiPosition.z}," +
+                 $"{r.uiRotation.x},{r.uiRotation.y},{r.uiRotation.z},{r.uiRotation.w}");
 
             }
         }

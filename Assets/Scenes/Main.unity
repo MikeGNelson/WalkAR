@@ -1128,6 +1128,7 @@ MonoBehaviour:
   ET: {fileID: 751923645}
   message: {fileID: 0}
   screenBlanker: {fileID: 0}
+  environmentContainer: {fileID: 0}
   hasReachedDestination: 0
   stopWriting: 0
   isRecording: 0
@@ -1136,6 +1137,7 @@ MonoBehaviour:
   endTime: 0
   currentSpeed: 0
   prevTrans: {x: 0, y: 0, z: 0}
+  worldOffset: {x: 0, y: 0, z: 0}
   leftHand: {fileID: 808867828}
   rightHand: {fileID: 1992027163}
 --- !u!1 &751923641
@@ -1808,6 +1810,7 @@ MonoBehaviour:
   ET: {fileID: 751923645}
   message: {fileID: 0}
   screenBlanker: {fileID: 0}
+  environmentContainer: {fileID: 0}
   hasReachedDestination: 0
   stopWriting: 0
   isRecording: 0
@@ -1816,6 +1819,7 @@ MonoBehaviour:
   endTime: 0
   currentSpeed: 0
   prevTrans: {x: 0, y: 0, z: 0}
+  worldOffset: {x: 0, y: 0, z: 0}
   leftHand: {fileID: 808867828}
   rightHand: {fileID: 1992027163}
 --- !u!1 &1058886950
@@ -2041,7 +2045,7 @@ LineRenderer:
       m_Curve:
       - serializedVersion: 3
         time: 0
-        value: 0.11261177
+        value: 0.012147903
         inSlope: 0
         outSlope: 0
         tangentMode: 0
