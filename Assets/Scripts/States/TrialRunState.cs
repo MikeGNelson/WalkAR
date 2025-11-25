@@ -22,11 +22,11 @@ public class TrialRunState : TrialStateBase
         if (!hasStarted)
             return;
 
-        bool reachedGoal = playerController.hasReachedDestination;
+        //bool reachedGoal = playerController.hasReachedDestination;
         bool manualEnd = OVRInput.GetDown(OVRInput.Button.PrimaryIndexTrigger, OVRInput.Controller.LTouch);
 
 
-        if (reachedGoal || manualEnd)
+        if (manualEnd) //reachedGoal ||
         {
             Debug.Log("[TrialRunState] Ending trial – calling GameController.EndTrial()");
             gameController.EndTrial();

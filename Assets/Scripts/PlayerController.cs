@@ -55,30 +55,30 @@ namespace Avoidance
             {
                 //message.text = "Walk";
 
-                // Detect reaching the destination
-                if (Vector3.Distance(transform.position, GC.endPoint.position) < 1.8f && !stopWriting)
-                {
-                    hasReachedDestination = true;
-                }
+                //// Detect reaching the destination
+                //if (Vector3.Distance(transform.position, GC.endPoint.position) < 1.8f && !stopWriting)
+                //{
+                //    hasReachedDestination = true;
+                //}
 
-                if (hasReachedDestination)
-                {
-                    // Trial complete
-                    hasReachedDestination = false;
-                    stopWriting = true;
-                    isRecording = false;
-                    GC.isRecording = false;
+                //if (hasReachedDestination)
+                //{
+                //    // Trial complete
+                //    hasReachedDestination = false;
+                //    stopWriting = true;
+                //    isRecording = false;
+                //    GC.isRecording = false;
 
-                    endTime = Time.time;
-                    ToggleScreen(true);
+                //    endTime = Time.time;
+                //    ToggleScreen(true);
 
-                    // Write and end trial
-                    DM.WriteData();
-                    GC.EndTrial();
+                //    // Write and end trial
+                //    DM.WriteData();
+                //    GC.EndTrial();
 
-                    ToggleScreen(false);
-                    return;
-                }
+                //    ToggleScreen(false);
+                //    return;
+                //}
 
                 // While walking and recording
                 if (!stopWriting)
