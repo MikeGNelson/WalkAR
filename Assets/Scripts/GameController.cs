@@ -151,7 +151,7 @@ public class GameController : MonoBehaviour
         modelsList.Clear();
     }
 
-    private List<DataManager.Conditons> GenerateLatinSquareOrder(int uid)
+    public List<DataManager.Conditons> GenerateLatinSquareOrder(int uid)
     {
         var baseOrder = new List<DataManager.Conditons>
         {

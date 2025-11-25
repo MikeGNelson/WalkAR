@@ -13,8 +13,10 @@ public class TrialController : MonoBehaviour
     [Header("UI")]
 
     public GameObject initUIPrefab;
+    public GameObject startUIPrefab;
 
     [HideInInspector] public GameObject activeInitUI;
+    [HideInInspector] public GameObject activeStartUI;
 
 
 
@@ -41,6 +43,41 @@ public class TrialController : MonoBehaviour
         currentState?.Exit();
         currentState = newState;
         currentState.Enter();
+    }
+
+
+    public void SpawnStartUI()
+    {
+        if (activeStartUI != null)
+            Destroy(activeInitUI);
+
+        activeStartUI = Instantiate(startUIPrefab);
+
+        var ui = activeStartUI.GetComponent<TrialStartUI>();
+
+        var order = GC.GenerateLatinSquareOrder(GC.UID);
+
+        ui.Initialize(GC, this, GC.UID, order, GC.currentConditionIndex);
+
+        // assign head for smooth follow
+        ui.head = DM.ET.playerHead;
+    }
+
+    public void SetTrialIndex(int value)
+    {
+        currentTrialIndex = Mathf.Clamp(value, 0, GC.GenerateLatinSquareOrder(GC.UID).Count - 1);
+
+        if (activeStartUI != null)
+            activeStartUI.GetComponent<TrialStartUI>().UpdateIndex(currentTrialIndex);
+    }
+
+    public void DestroyStartUI()
+    {
+        if (activeStartUI != null)
+        {
+            Destroy(activeStartUI);
+            activeStartUI = null;
+        }
     }
 
     // For other states to access
